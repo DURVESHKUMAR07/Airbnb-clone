@@ -17,11 +17,14 @@
 
         <div class="row">
         <div class="card listing-card col-6 offset-3 mb-3" >
-            <img src="<%= list.image %>" class="card-img-top" alt="listing_image" style="height: 20rem;">
+            <img src="<%= list.image.url %>" class="card-img-top" alt="listing_image" style="height: 20rem;">
             <div class="card-body">
               <p class="card-text">
                 
-                <b><%= list.description %></b> <br>
+                <div class="position-absolute bottom-0 end-0 me-3 mb-2 bg-light px-2 py-1 rounded">
+                    <b><i>Owned by <%= list.owner.username %></i></b>
+                </div>
+                <b style="opacity: 0.8;" ><%= list.description %></b> <br>
                 &#8377; <%= list.price.toLocaleString("en-IN") %> / night  <br>
                 <%= list.location %> <br>
                 <%= list.country %> <br>
@@ -30,7 +33,7 @@
         </div>
         </div>
 
-       
+       <% if(currUser && list.owner._id.equals(currUser._id)) { %>
         <div class="edit-del">
             <a href="/listing/<%= list._id %>/edit" class="btn btn-success mb-3 ">Edit</a>
 
@@ -38,15 +41,35 @@
             <button class="btn btn-danger mb-3 ">Delete this Listing</button>
         </form>  
         </div>  
+        <% } %>
 
-        <hr>
+        
 
+        
         <div class="col-6 offset-3">
+            <% if(currUser) { %>
+            <hr>    
             <h4>Leave a Review</h4>
             <form action="/listing/<%= list._id %>/review" method="POST" novalidate class="needs-validation">
-                <div>
-                    <label for="rating" class="form-label">Rating</label>
-                    <input type="range" name="review[rating]" id="rating" min="1" max="5" class="form-range" step="0.5">
+                
+
+                <div class="mt-3">
+                <label for="rating" class="form-label">Rating</label>
+                <fieldset class="starability-slot">
+                    
+                    
+                    <input type="radio" id="no-rate" class="input-no-rate" name="review[rating]" value="1" checked aria-label="No rating." />
+                    <input type="radio" id="first-rate1" name="review[rating]" value="1" />
+                    <label for="first-rate1" title="Terrible">1 star</label>
+                    <input type="radio" id="first-rate2" name="review[rating]" value="2" />
+                    <label for="first-rate2" title="Not good">2 stars</label>
+                    <input type="radio" id="first-rate3" name="review[rating]" value="3" />
+                    <label for="first-rate3" title="Average">3 stars</label>
+                    <input type="radio" id="first-rate4" name="review[rating]" value="4" />
+                    <label for="first-rate4" title="Very good">4 stars</label>
+                    <input type="radio" id="first-rate5" name="review[rating]" value="5" />
+                    <label for="first-rate5" title="Amazing">5 stars</label>
+                  </fieldset>
                 </div>
                 
                 <div>
@@ -57,17 +80,22 @@
                 </div>
                 <button class="btn btn-outline-dark mb-3 mt-3">Submit</button>
             </form>
+            <% } %>
 
 
+            
+
+        <% if(list.review.length > 0){   %>  
             <hr>
-
         <h3> <b>all reviews</b> </h3>
         <div class="row">
             <% for(review of list.review) {%>
                 <div class="card col-5 offset-3  ms-3 mb-3 ">
                     <div class="card-body">
+                        <h6 class="card-text"><i>@<%= review.author.username %></i></h6>
+                        
+                        <p class="starability-result card-text" data-rating="<%= review.rating %>"></p>
                         <p class="card-text"><%= review.comment %></p>
-                        <p class="card-text"><b><%= review.rating %> stars</b></p>
                     </div>
                     <form action="/listing/<%= list._id %>/review/<%= review._id %>?_method=DELETE" method="post">
                         <button class="btn btn-sm btn-dark offset-9 mb-3">delete</button>
@@ -75,7 +103,7 @@
                 </div>
             <% } %>    
         </div>
-
+        <% } %>
 
         </div>
 

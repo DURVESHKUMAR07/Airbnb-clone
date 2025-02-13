@@ -1,3 +1,10 @@
+if(process.env.NODE_ENV != "production")
+{
+    require('dotenv').config();
+}
+// console.log(process.env.SECRET); // remove this after you've confirmed it is working
+
+
 const express=require("express");
 const app=express();
 const mongoose=require("mongoose");
@@ -8,6 +15,7 @@ const methodOverride=require("method-override");
 
 const session=require("express-session");
 const flash=require("connect-flash");
+
 
 // const {listingSchema,reviewSchema}=require("./schema.js");
 // const wrapAsync=require("./utils/wrapAsync.js")
@@ -24,6 +32,7 @@ const review=require("./routes/review.js");
 const userRouter=require("./routes/user.js");
 const user=require("./models/user.js");
 
+const isLoggedin=require("./middleware.js");
 
 const mongoose_url='mongodb://127.0.0.1:27017/wanderlust';
 
@@ -62,16 +71,16 @@ app.use(flash());
 
 app.use(passport.initialize());
 app.use(passport.session());
-passport.use(new LocalStrategy(user.authenticate));
-
-passport.serializeUser(user.serializeUser());
-passport.deserializeUser(user.deserializeUser());
+passport.use(new LocalStrategy(user.authenticate()));    //authenticate is a method in passport-local-mongoose  
+passport.serializeUser(user.serializeUser());     //serializeUser is a method in passport-local-mongoose
+passport.deserializeUser(user.deserializeUser());  //deserializeUser is a method in passport-local-mongoose
 
 
 app.use((req,res,next)=>{
     res.locals.success = req.flash("success");
     res.locals.error = req.flash("error");
     // console.log(res.locals.success);
+    res.locals.currUser=req.user;
     next();
 })
 
@@ -87,9 +96,9 @@ app.use((req,res,next)=>{
 // })
 
 // root route
-app.get("/",(req,res)=>{
-    res.send("This is root page...");
-})
+// app.get("/",(req,res)=>{
+//     res.send("This is root page...");
+// })
 
 app.use("/listing",listing);
 app.use("/listing/:id/review",review);

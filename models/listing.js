@@ -11,11 +11,8 @@ const listingSchema=new Schema({
         type:String,
     },
     image:{
-        type:String,
-        default:"https://static.vecteezy.com/system/resources/thumbnails/023/041/976/small_2x/glass-globe-ball-with-tree-growing-and-green-nature-blur-background-eco-earth-day-concept-generat-ai-free-photo.jpg",
-        set:(v)=>
-        (v === "" ? "https://static.vecteezy.com/system/resources/thumbnails/023/041/976/small_2x/glass-globe-ball-with-tree-growing-and-green-nature-blur-background-eco-earth-day-concept-generat-ai-free-photo.jpg" : v),
-        
+       url: String,
+       filename: String,
     },
     price:{
         type:Number,
@@ -30,6 +27,10 @@ const listingSchema=new Schema({
         type:Schema.Types.ObjectId,
         ref:"review",
     }],
+    owner:{
+        type:Schema.Types.ObjectId,
+        ref:"user",
+    },
 });
 
 listingSchema.post("findOneAndDelete",async(listing)=>{

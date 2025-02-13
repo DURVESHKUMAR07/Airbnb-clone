@@ -1,34 +1,22 @@
 const express=require("express");
 const router=express.Router();
-const ExpressError=require("../utils/ExpressError.js")
-
 const wrapAsync=require("../utils/wrapAsync");
-const {listingSchema,reviewSchema}=require("../schema.js");
-const Listing=require("../models/listing");
+const {isLoggedin,isOwner,validateListing}=require("../middleware.js");
+const listingController=require("../controllers/listings.js");
 
-const validateListing=(req,res,next)=>{
-    let {error}=listingSchema.validate(req.body);
+const multer  = require('multer');
+const {storage} =require("../cloudConfig.js");
+const upload = multer({ storage });
+
+router
+    .route("/")
+    .get(wrapAsync(listingController.index))        //index route
+    .post(isLoggedin,upload.single('listing[image]'),
+        validateListing, wrapAsync(listingController.postNewList));        //post route
     
-    if(error)
-    {
-        let errMsg=error.details.map((el)=>el.message).join(",");
-        throw new ExpressError(400,errMsg);
-    }else{
-        next();
-    }
-}
-
-
-
-
-// index route
-router.get("/",wrapAsync(async (req,res)=>{
-    const allListing=await Listing.find({});
-    // console.log(allListing);
-    res.render("listings/index.ejs",{allListing});
-}))
-
-
+    // .post(upload.single('listing[image]'),(req,res)=>{
+    //     res.send(req.file);
+    // });
 
 // to avoid we can use routes like this
 // we can use first static route and then dynamic route
@@ -39,74 +27,20 @@ router.get("/",wrapAsync(async (req,res)=>{
 // /listing/view/:id
 
 
-
-
 // new route
-router.get("/new",(req,res)=>{
-    res.render("listings/newlist.ejs");
-})
+router.get("/new",isLoggedin,listingController.newList)
 
  
-// show route
-router.get("/:id",wrapAsync(async (req,res)=>{           //id is dynamic parameter , sequence is important
-    let {id}=req.params;
-    const list=await Listing.findById(id).populate("review");
-    if(!list)
-    {
-        req.flash("error","Listing you requested for does not exist!");
-        res.redirect("/listing");
-    }
-    res.render("listings/show.ejs",{list});
-}))
-
-
-// post route
-router.post("/",validateListing, wrapAsync(async (req,res,next)=>{
-    // let {image,title,description,price,location,country}=req.body;
-    // const listing=req.body.listing;
-
-    // try{
-
-        const newlisting=await new Listing(req.body.listing);
-        await newlisting.save();
-        req.flash("success","New Listing Created!");
-        res.redirect("/listing");
-    // }catch(err){
-    //     next(err);
-    // }
-
-}))
+router
+    .route("/:id")
+    .get(wrapAsync(listingController.showList))      //show route
+    .put(isLoggedin,isOwner,upload.single('listing[image]'),
+        validateListing,wrapAsync(listingController.updateList))  //update route
+    .delete(isLoggedin,isOwner,wrapAsync(listingController.deleteList))      //delete route
 
 
 // edit route
-router.get("/:id/edit",wrapAsync(async (req,res)=>{
-    let {id}=req.params;
-    const list=await Listing.findById(id);
-    if(!list)
-        {
-            req.flash("error","Listing you requested for does not exist!");
-            res.redirect("/listing");
-        }
-    res.render("listings/edit.ejs",{list});
-}))
+router.get("/:id/edit",isLoggedin,isOwner,wrapAsync(listingController.editList))
 
-
-// update route
-router.put("/:id",validateListing,wrapAsync(async (req,res)=>{
-    let {id}=req.params;
-    await Listing.findByIdAndUpdate(id,{...req.body.listing});
-    req.flash("success","Listing Updated!");
-    res.redirect(`/listing/${id}`);
-}))
-
-
-// delete route
-router.delete("/:id",wrapAsync(async(req,res)=>{
-    let {id}=req.params;
-    const deletelist=await Listing.findByIdAndDelete(id);
-    console.log(deletelist);
-    req.flash("success","Listing Deleted!");
-    res.redirect("/listing");
-}))
 
 module.exports=router;
